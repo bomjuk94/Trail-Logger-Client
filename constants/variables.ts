@@ -1,0 +1,1 @@
+export const dashboardTabOptions = ['dashboard', 'achievements']
