@@ -5,15 +5,15 @@ const config: ExpoConfig = {
     name: "trail-logger",
     slug: "trail-logger",
     version: "1.0.0",
-    icon: "./assets/images/icon.png",
+    icon: "./public/images/icon.png",
     splash: {
-        image: "./assets/images/splash-icon.png",
+        image: "./public/images/splash-icon.png",
         resizeMode: "contain",
         backgroundColor: "#548C46",
     },
     web: {
         bundler: "metro",
-        favicon: "./assets/images/favicon.png",
+        favicon: "./public/images/favicon.png",
         meta: {
             themeColor: "#548C46",
             apple: true,
@@ -24,7 +24,6 @@ const config: ExpoConfig = {
         backgroundColor: "#ffffff",
         display: "standalone",
         output: "static",
-        manifest: "./public/manifest.json",
     },
     extra: {
         apiBase: process.env.EXPO_PUBLIC_API_BASE_URL,
@@ -35,6 +34,8 @@ const config: ExpoConfig = {
         bkgdKey: process.env.EXPO_PUBLIC_BKGD_KEY ?? "@trail-logger:points-buffer",
     },
     android: {
+        package: "app.traillogger",
+        versionCode: 1,
         permissions: [
             "ACCESS_COARSE_LOCATION",
             "ACCESS_FINE_LOCATION",
