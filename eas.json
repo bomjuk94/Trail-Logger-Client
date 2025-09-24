@@ -1,0 +1,20 @@
+{
+    "cli": {
+        "version": ">= 11.0.0"
+    },
+    "build": {
+        "production": {
+            "android": {
+                "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_API_BASE_URL": "https://senior-stacey-zealouslurker-33de224b.koyeb.app",
+                "EXPO_PUBLIC_OPENWEATHER_API_KEY": "f6d1b1ccae1a25db7679ce38c28b9011",
+                "EXPO_PUBLIC_TOKEN_KEY": "tl_jwt",
+                "EXPO_PUBLIC_AUTH_KEY": "traillogger_is_authed",
+                "EXPO_PUBLIC_ASKED_KEY": "hasPromptedLocation",
+                "EXPO_PUBLIC_BKGD_KEY": "@trail-logger:points-buffer"
+            }
+        }
+    }
+}
