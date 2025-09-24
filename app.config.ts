@@ -28,10 +28,10 @@ const config: ExpoConfig = {
     extra: {
         apiBase: process.env.EXPO_PUBLIC_API_BASE_URL,
         openWeatherApiKey: process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY,
-        tokenKey: process.env.EXPO_PUBLIC_TOKEN_KEY,
-        authKey: process.env.EXPO_PUBLIC_AUTH_KEY,
-        askedKey: process.env.EXPO_PUBLIC_ASKED_KEY,
-        bkgdKey: process.env.EXPO_PUBLIC_BKGD_KEY,
+        tokenKey: process.env.EXPO_PUBLIC_TOKEN_KEY ?? "tl_jwt",
+        authKey: process.env.EXPO_PUBLIC_AUTH_KEY ?? "traillogger_is_authed",
+        askedKey: process.env.EXPO_PUBLIC_ASKED_KEY ?? "hasPromptedLocation",
+        bkgdKey: process.env.EXPO_PUBLIC_BKGD_KEY ?? "@trail-logger:points-buffer",
     },
     android: {
         permissions: [
