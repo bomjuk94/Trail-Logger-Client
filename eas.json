@@ -14,7 +14,8 @@
                 "EXPO_PUBLIC_AUTH_KEY": "traillogger_is_authed",
                 "EXPO_PUBLIC_ASKED_KEY": "hasPromptedLocation",
                 "EXPO_PUBLIC_BKGD_KEY": "@trail-logger:points-buffer"
-            }
+            },
+            "channel": "production"
         }
     }
 }
