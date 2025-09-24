@@ -7,9 +7,6 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/components/useColorScheme';
 export { ErrorBoundary, } from 'expo-router';
-export const unstable_settings = {
-    initialRouteName: '(tabs)',
-};
 
 SplashScreen.preventAutoHideAsync();
 
