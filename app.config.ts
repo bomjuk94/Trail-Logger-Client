@@ -6,6 +6,7 @@ const config: ExpoConfig = {
     slug: "trail-logger",
     version: "1.0.0",
     icon: "./public/images/icon.png",
+    owner: "bomjukim",
     splash: {
         image: "./public/images/splash-icon.png",
         resizeMode: "contain",
@@ -32,6 +33,9 @@ const config: ExpoConfig = {
         authKey: process.env.EXPO_PUBLIC_AUTH_KEY ?? "traillogger_is_authed",
         askedKey: process.env.EXPO_PUBLIC_ASKED_KEY ?? "hasPromptedLocation",
         bkgdKey: process.env.EXPO_PUBLIC_BKGD_KEY ?? "@trail-logger:points-buffer",
+        eas: {
+            projectId: "c8711be0-8ee9-4260-b28a-916b0d2fa1a4",
+        },
     },
     android: {
         package: "app.traillogger",
