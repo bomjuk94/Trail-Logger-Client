@@ -26,14 +26,12 @@ const config: ExpoConfig = {
         output: "static",
     },
     extra: {
-        // Public (okay to expose in client bundle)
         apiBase: process.env.EXPO_PUBLIC_API_BASE_URL,
         openWeatherApiKey: process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY,
-        // Private (native only; keep if you also build Android later)
-        askedKey: process.env.ASKED_KEY,
-        bkgdKey: process.env.BKGD_KEY,
-        tokenKey: process.env.TOKEN_KEY,
-        authKey: process.env.AUTH_KEY,
+        tokenKey: process.env.EXPO_PUBLIC_TOKEN_KEY,
+        authKey: process.env.EXPO_PUBLIC_AUTH_KEY,
+        askedKey: process.env.EXPO_PUBLIC_ASKED_KEY,
+        bkgdKey: process.env.EXPO_PUBLIC_BKGD_KEY,
     },
     android: {
         permissions: [
