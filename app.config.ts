@@ -24,6 +24,7 @@ const config: ExpoConfig = {
         backgroundColor: "#ffffff",
         display: "standalone",
         output: "static",
+        manifest: "./public/manifest.json",
     },
     extra: {
         apiBase: process.env.EXPO_PUBLIC_API_BASE_URL,
