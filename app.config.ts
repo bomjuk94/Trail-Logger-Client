@@ -63,6 +63,10 @@ const config: ExpoConfig = {
         ],
     ],
     scheme: "traillogger",
+    runtimeVersion: { policy: 'sdkVersion' },
+    updates: {
+        url: "https://u.expo.dev/c8711be0-8ee9-4260-b28a-916b0d2fa1a4"
+    },
 };
 
 export default config;
