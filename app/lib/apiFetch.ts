@@ -1,10 +1,26 @@
 // app/lib/apiFetch.ts
-export const BASE = (process.env.EXPO_PUBLIC_API_BASE_URL ?? '').replace(/\/$/, '');
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
+
+function getApiBase(): string {
+    // Read from expo config at build/runtime (covers native + web)
+    const extra =
+        (Constants?.expoConfig?.extra as any) ??
+        ((Updates as any)?.manifest?.extra as any) ??
+        {};
+
+    const raw =
+        extra.apiBase ??
+        process.env.EXPO_PUBLIC_API_BASE_URL ?? // web/dev fallback
+        '';
+
+    return String(raw).replace(/\/$/, ''); // strip trailing slash
+}
+
+export const BASE = getApiBase();
 
 if (!BASE) {
-    // optional: helpful during dev
-    // throw new Error('EXPO_PUBLIC_API_BASE_URL is not set');
-    console.warn('EXPO_PUBLIC_API_BASE_URL is not set');
+    console.warn('EXPO_PUBLIC_API_BASE_URL / extra.apiBase is not set — requests will be relative and fail.');
 }
 
 export function apiFetch(path: string, opts?: RequestInit) {
@@ -15,26 +31,5 @@ export function apiFetch(path: string, opts?: RequestInit) {
             'Content-Type': 'application/json',
             ...(opts?.headers || {}),
         },
-        // credentials: 'include', // only if you’re using cookies
     });
 }
-
-
-
-// import { Platform } from 'react-native';
-
-// const API_BASE =
-//     __DEV__
-//         ? Platform.select({
-//             ios: 'http://localhost:5000',
-//             android: 'http://10.0.2.2:5000',
-//             default: 'http://99.230.249.200:5000',
-//             web: 'http://localhost:5000',
-//         })!
-//         : 'https://api.yourdomain.com';
-
-// export const apiFetch = (path: string, opts?: RequestInit) =>
-//     fetch(`${API_BASE}${path}`, {
-//         headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
-//         ...opts,
-//     });
