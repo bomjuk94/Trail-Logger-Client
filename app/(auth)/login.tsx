@@ -9,33 +9,9 @@ import { useAuthToken } from '../lib/userAuthToken';
 
 export default function Login() {
 
-    const { token } = useAuthToken()
-
-    useEffect(() => {
-
-        const ping = async () => {
-            try {
-                const res = await apiFetch('/api/ping');
-
-                if (res.ok) {
-                    console.log('pong')
-                }
-
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-            } catch (e: any) {
-                console.log('could not get api response')
-                console.log('error', e)
-            }
-        }
-
-        ping()
-    }, [])
     const { signIn } = useAuth();
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-
-
 
     return (
         <View style={styles.container}>

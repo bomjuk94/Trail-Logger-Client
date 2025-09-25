@@ -146,11 +146,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser({ id: 'remote-user' });
                 setStatus('signedIn');
                 router.replace('/');
-
-                // saveToken(returnedData.token)
-                // setUser({ id: 'remote-user' });
-                // setStatus('signedIn');
-                // router.replace('/');
             }
         } catch (e) {
             showToast({ type: 'error', msg: (e as Error).message });
