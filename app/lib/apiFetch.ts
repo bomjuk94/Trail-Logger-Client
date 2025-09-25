@@ -1,5 +1,6 @@
 // apiFetch.ts
-const FALLBACK = 'https://senior-stacey-zealouslurker-33de224b.koyeb.app';
+// const FALLBACK = 'https://senior-stacey-zealouslurker-33de224b.koyeb.app';
+const FALLBACK = 'api.bomjukim.com';
 export const BASE = (process.env.EXPO_PUBLIC_API_BASE_URL || FALLBACK).replace(/\/$/, '');
 
 console.log('[BOOT] BASE =', BASE);
@@ -18,7 +19,7 @@ export async function apiFetch(path: string, opts?: RequestInit) {
         console.log('[apiFetch] <-', res.status, url);
         return res;
     } catch (e: any) {
-        console.log('[apiFetch] ERROR', url, e?.name, e?.message);
+        console.log('[apiFetch] ERROR', url, e?.name, e?.message)
         throw e;
     }
 }

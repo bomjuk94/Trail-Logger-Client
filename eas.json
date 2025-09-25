@@ -8,7 +8,7 @@
                 "buildType": "apk"
             },
             "env": {
-                "EXPO_PUBLIC_API_BASE_URL": "https://senior-stacey-zealouslurker-33de224b.koyeb.app",
+                "EXPO_PUBLIC_API_BASE_URL": "api.bomjukim.com",
                 "EXPO_PUBLIC_OPENWEATHER_API_KEY": "f6d1b1ccae1a25db7679ce38c28b9011",
                 "EXPO_PUBLIC_TOKEN_KEY": "tl_jwt",
                 "EXPO_PUBLIC_AUTH_KEY": "traillogger_is_authed",
