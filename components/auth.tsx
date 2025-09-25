@@ -9,20 +9,13 @@ import type { AuthStatus, User, Ctx, SignInProps } from '@/types';
 import { getConfig } from '@/app/lib/getConfig';
 import { showToast } from '@/app/lib/showToast';
 
-const { getAuthKey } = getConfig()
+const { getAuthKey } = getConfig();
 const KEY = getAuthKey().authKey ?? 'traillogger_is_authed';
 
 const AuthCtx = createContext<Ctx>(null as any);
 const isWeb = Platform.OS === 'web';
 
-// async function getBackend() {
-//     try {
-//         const ok = await SecureStore.isAvailableAsync();
-//         if (ok) return 'secure' as const;
-//     } catch { }
-//     return 'async' as const;
-// }
-
+/** Storage helpers (web → localStorage; native → SecureStore with AsyncStorage fallback) */
 async function sget(key: string) {
     if (isWeb) return Promise.resolve(localStorage.getItem(key));
     try {
@@ -31,22 +24,6 @@ async function sget(key: string) {
     } catch { }
     return AsyncStorage.getItem(key);
 }
-
-// async function sget(key: string) {
-//     const backend = await getBackend();
-//     if (backend === 'secure') {
-//         try {
-//             const opts = Platform.OS === 'ios' ? { keychainService: 'com.traillogger.auth' } : undefined;
-//             return await SecureStore.getItemAsync(key, opts as any);
-//         } catch (e) {
-//             console.warn('[auth] SecureStore.getItemAsync error:', e);
-//             return null;
-//         }
-//     } else {
-//         return AsyncStorage.getItem(key);
-//     }
-// }
-
 async function sset(key: string, value: string) {
     if (isWeb) { localStorage.setItem(key, value); return; }
     try {
@@ -55,22 +32,6 @@ async function sset(key: string, value: string) {
     } catch { }
     return AsyncStorage.setItem(key, value);
 }
-
-// async function sset(key: string, value: string) {
-//     const backend = await getBackend();
-//     if (backend === 'secure') {
-//         try {
-//             const opts = Platform.OS === 'ios' ? { keychainService: 'com.traillogger.auth' } : undefined;
-//             return await SecureStore.setItemAsync(key, value, opts as any);
-//         } catch (e) {
-//             console.warn('[auth] SecureStore.setItemAsync error, falling back:', e);
-//             return AsyncStorage.setItem(key, value);
-//         }
-//     } else {
-//         return AsyncStorage.setItem(key, value);
-//     }
-// }
-
 async function sdel(key: string) {
     if (isWeb) { localStorage.removeItem(key); return; }
     try {
@@ -80,27 +41,50 @@ async function sdel(key: string) {
     return AsyncStorage.removeItem(key);
 }
 
-// async function sdel(key: string) {
-//     const backend = await getBackend();
-//     if (backend === 'secure') {
-//         try {
-//             const opts = Platform.OS === 'ios' ? { keychainService: 'com.traillogger.auth' } : undefined;
-//             return await SecureStore.deleteItemAsync(key, opts as any);
-//         } catch (e) {
-//             console.warn('[auth] SecureStore.deleteItemAsync error, falling back:', e);
-//             return AsyncStorage.removeItem(key);
-//         }
-//     } else {
-//         return AsyncStorage.removeItem(key);
-//     }
-// }
+/** Parse a fetch Response safely:
+ * - Prefer JSON when content-type says JSON
+ * - Otherwise fall back to text
+ * Returns: { ok, status, data, text }
+ */
+async function safeParse(res: Response) {
+    const ct = res.headers.get('content-type') || '';
+    let text = '';
+    try {
+        text = await res.text();
+    } catch {
+        text = '';
+    }
+
+    let data: any = null;
+    if (ct.includes('application/json')) {
+        try { data = JSON.parse(text); } catch { /* keep null */ }
+    } else {
+        // Sometimes servers send JSON without proper header — try best-effort parse
+        try { data = JSON.parse(text); } catch { /* keep null */ }
+    }
+
+    return { ok: res.ok, status: res.status, data, text };
+}
+
+/** Prefer server-provided message; otherwise fall back to text or a generic label */
+function pickErrorMessage(payload: { data: any, text: string }, fallback: string) {
+    const { data, text } = payload;
+    return (
+        data?.error ||
+        data?.message ||
+        (typeof data === 'string' ? data : '') ||
+        text ||
+        fallback
+    );
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [status, setStatus] = useState<AuthStatus>('loading');
     const [user, setUser] = useState<User>(null);
     const router = useRouter();
-    const { saveToken, clearToken } = useAuthToken()
+    const { saveToken, clearToken } = useAuthToken();
 
+    /** Bootstrap session */
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -123,6 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => { cancelled = true; };
     }, []);
 
+    /** Sign in */
+
+
     const signIn = async ({
         userName,
         password,
@@ -136,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
             const returnedData = await res.json();
+            console.log('returned data', returnedData)
             if (!res.ok) {
                 throw new Error(returnedData.error || 'Login failed');
             }
@@ -158,35 +146,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPassword('')
     };
 
+    // const signIn = async ({
+    //     userName,
+    //     password,
+    //     setUserName,
+    //     setPassword,
+    // }: SignInProps) => {
+    //     try {
+    //         const res = await apiFetch('/api/login', {
+    //             method: 'POST',
+    //             body: JSON.stringify({ userName, password }),
+    //         });
+
+    //         const data = await res.json()
+    //         console.log('data', data)
+
+    //         // const parsed = await safeParse(res);
+    //         // console.log('parsed response', res.)
+
+    //         // if (!parsed.ok) {
+    //         //     const msg = pickErrorMessage(parsed, 'Login failed');
+    //         //     throw new Error(msg);
+    //         // }
+    //         // const token = parsed.data?.token;
+    //         // if (!token) {
+    //         //     throw new Error('Malformed response from server (missing token).');
+    //         // }
+
+    //         // await sset(KEY, '1');
+    //         // await saveToken(token);
+    //         // setUser({ id: 'remote-user' });
+    //         // setStatus('signedIn');
+    //         // router.replace('/');
+    //     } catch (e) {
+    //         const msg = (e as Error).message || 'Login failed';
+    //         showToast({ type: 'error', msg });
+    //         console.warn('[auth] signIn failed:', msg);
+    //         setUser(null);
+    //         setStatus('signedOut');
+    //     } finally {
+    //         // Clear input fields regardless
+    //         setUserName('');
+    //         setPassword('');
+    //     }
+    // };
+
+    /** Register */
     const register = async (userName: string, password: string) => {
         try {
             const res = await apiFetch('/api/register', {
                 method: 'POST',
                 body: JSON.stringify({ userName, password }),
-            })
+            });
 
-            const returnedData = await res.json();
-            if (!res.ok) throw new Error(returnedData.error || 'Registration failed');
+            const parsed = await safeParse(res);
 
-            if (returnedData.token) {
-                await sset(KEY, '1');
-                await saveToken(returnedData.token);
-                setUser({ id: 'remote-user' });
-                setStatus('signedIn');
-                router.replace('/');
-
-                // saveToken(returnedData.token)
-                // setUser({ id: 'remote-user' });
-                // setStatus('signedIn');
-                // router.replace('/');
+            if (!parsed.ok) {
+                const msg = pickErrorMessage(parsed, 'Registration failed');
+                throw new Error(msg);
             }
+
+            const token = parsed.data?.token;
+            if (!token) {
+                throw new Error('Malformed response from server (missing token).');
+            }
+
+            await sset(KEY, '1');
+            await saveToken(token);
+            setUser({ id: 'remote-user' });
+            setStatus('signedIn');
+            router.replace('/');
         } catch (e) {
-            console.warn('[auth] register failed:', (e as Error).message);
+            const msg = (e as Error).message || 'Registration failed';
+            showToast({ type: 'error', msg });
+            console.warn('[auth] register failed:', msg);
             setUser(null);
             setStatus('signedOut');
         }
     };
 
+    /** Sign out */
     const signOut = async () => {
         try {
             await sdel(KEY);
