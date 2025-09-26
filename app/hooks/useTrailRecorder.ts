@@ -51,18 +51,51 @@ export default function useTrailRecorder() {
         };
     }, [status]);
 
-    const handlePoint = useCallback((p: TrackPoint) => {
-        const last = lastRef.current;
-        if (last) {
-            const d = haversine(last, p);
-            const dt = Math.max(1, (p.ts - last.ts) / 1000);
-            // simple speed filter (~< 8 m/s) to ignore big jumps
-            if (d / dt < 8) setDistance((x) => x + d);
-        }
-        lastRef.current = p;
+    const MIN_ACCURACY_M = 30;      // discard noisy fixes (>30 m)
+    const MAX_SPEED_MS = 12;        // discard unrealistic jumps (>12 m/s)
+    const MAX_JUMP_M = 120;         // discard single huge hops (e.g., tower handoffs)
 
-        setPoints((prev) => (Array.isArray(prev) ? prev.concat(p) : [p]));
+    const handlePoint = useCallback((p: TrackPoint & { acc?: number }) => {
+        const last = lastRef.current;
+
+        // If we have an accuracy value and it's poor, skip
+        if (typeof p.acc === 'number' && p.acc > MIN_ACCURACY_M) {
+            // console.log('[GPS] reject: accuracy', p.acc);
+            return;
+        }
+
+        if (last) {
+            const d = haversine(last, p);         // meters
+            const dt = Math.max(1, (p.ts - last.ts) / 1000); // seconds
+            const v = d / dt;                     // m/s
+
+            // Teleport or insane speed? drop it.
+            if (d > MAX_JUMP_M || v > MAX_SPEED_MS) {
+                // console.log('[GPS] reject: jump/speed', { d: round(d), dt: round(dt), v: round(v) });
+                return;
+            }
+
+            // Accept increment
+            setDistance(x => x + d);
+            // console.log('[GPS] accept', { d: round(d), dt: round(dt), v: round(v), acc: p.acc ?? null });
+        }
+
+        lastRef.current = p;
+        setPoints(prev => (Array.isArray(prev) ? prev.concat(p) : [p]));
     }, []);
+
+    // const handlePoint = useCallback((p: TrackPoint) => {
+    //     const last = lastRef.current;
+    //     if (last) {
+    //         const d = haversine(last, p);
+    //         const dt = Math.max(1, (p.ts - last.ts) / 1000);
+    //         // simple speed filter (~< 8 m/s) to ignore big jumps
+    //         if (d / dt < 8) setDistance((x) => x + d);
+    //     }
+    //     lastRef.current = p;
+
+    //     setPoints((prev) => (Array.isArray(prev) ? prev.concat(p) : [p]));
+    // }, []);
 
     function startTimer() {
         tickRef.current = setInterval(() => {
@@ -134,11 +167,13 @@ export default function useTrailRecorder() {
             );
         } else {
             // Native (Expo Location)
+
             nativeSubRef.current = await Location.watchPositionAsync(
                 {
-                    accuracy: Location.Accuracy.Highest,
-                    timeInterval: 2000,
-                    distanceInterval: 3,
+                    accuracy: Location.Accuracy.BestForNavigation, // or Highest
+                    // Let distance drive updates; timeInterval can throttle on some devices
+                    distanceInterval: 1,           // was 3
+                    timeInterval: 0,
                     mayShowUserSettingsDialog: true,
                 },
                 (loc) => {
@@ -147,9 +182,27 @@ export default function useTrailRecorder() {
                         lat: loc.coords.latitude,
                         lon: loc.coords.longitude,
                         alt: loc.coords.altitude ?? null,
+                        acc: loc.coords.accuracy ?? undefined,  // pass accuracy
                     });
                 }
             );
+
+            // nativeSubRef.current = await Location.watchPositionAsync(
+            //     {
+            //         accuracy: Location.Accuracy.Highest,
+            //         timeInterval: 2000,
+            //         distanceInterval: 3,
+            //         mayShowUserSettingsDialog: true,
+            //     },
+            //     (loc) => {
+            //         handlePoint({
+            //             ts: Date.now(),
+            //             lat: loc.coords.latitude,
+            //             lon: loc.coords.longitude,
+            //             alt: loc.coords.altitude ?? null,
+            //         });
+            //     }
+            // );
         }
 
         setStatus('recording');
@@ -232,11 +285,14 @@ export default function useTrailRecorder() {
                 { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
             );
         } else {
+
             nativeSubRef.current = await Location.watchPositionAsync(
                 {
-                    accuracy: Location.Accuracy.Highest,
-                    timeInterval: 2000,
-                    distanceInterval: 3,
+                    accuracy: Location.Accuracy.BestForNavigation, // or Highest
+                    // Let distance drive updates; timeInterval can throttle on some devices
+                    distanceInterval: 1,           // was 3
+                    timeInterval: 0,
+                    mayShowUserSettingsDialog: true,
                 },
                 (loc) => {
                     handlePoint({
@@ -244,9 +300,26 @@ export default function useTrailRecorder() {
                         lat: loc.coords.latitude,
                         lon: loc.coords.longitude,
                         alt: loc.coords.altitude ?? null,
+                        acc: loc.coords.accuracy ?? undefined,  // pass accuracy
                     });
                 }
             );
+
+            // nativeSubRef.current = await Location.watchPositionAsync(
+            //     {
+            //         accuracy: Location.Accuracy.Highest,
+            //         timeInterval: 2000,
+            //         distanceInterval: 3,
+            //     },
+            //     (loc) => {
+            //         handlePoint({
+            //             ts: Date.now(),
+            //             lat: loc.coords.latitude,
+            //             lon: loc.coords.longitude,
+            //             alt: loc.coords.altitude ?? null,
+            //         });
+            //     }
+            // );
         }
 
         setStatus('recording');
