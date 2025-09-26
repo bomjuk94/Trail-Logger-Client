@@ -1,4 +1,3 @@
-// app/hooks/useTrailRecorder.ts
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import * as Location from 'expo-location';
@@ -51,16 +50,23 @@ export default function useTrailRecorder() {
         };
     }, [status]);
 
+    // Production
     const MIN_ACCURACY_M = 30;      // discard noisy fixes (>30 m)
     const MAX_SPEED_MS = 12;        // discard unrealistic jumps (>12 m/s)
     const MAX_JUMP_M = 120;         // discard single huge hops (e.g., tower handoffs)
 
+    // Dev
+    // const MIN_ACCURACY_M = 1000;
+    // const MAX_SPEED_MS = 100;
+    // const MAX_JUMP_M = 10000;
+
+
     const handlePoint = useCallback((p: TrackPoint & { acc?: number }) => {
+
         const last = lastRef.current;
 
         // If we have an accuracy value and it's poor, skip
         if (typeof p.acc === 'number' && p.acc > MIN_ACCURACY_M) {
-            // console.log('[GPS] reject: accuracy', p.acc);
             return;
         }
 
@@ -71,31 +77,16 @@ export default function useTrailRecorder() {
 
             // Teleport or insane speed? drop it.
             if (d > MAX_JUMP_M || v > MAX_SPEED_MS) {
-                // console.log('[GPS] reject: jump/speed', { d: round(d), dt: round(dt), v: round(v) });
                 return;
             }
 
             // Accept increment
             setDistance(x => x + d);
-            // console.log('[GPS] accept', { d: round(d), dt: round(dt), v: round(v), acc: p.acc ?? null });
         }
 
         lastRef.current = p;
         setPoints(prev => (Array.isArray(prev) ? prev.concat(p) : [p]));
     }, []);
-
-    // const handlePoint = useCallback((p: TrackPoint) => {
-    //     const last = lastRef.current;
-    //     if (last) {
-    //         const d = haversine(last, p);
-    //         const dt = Math.max(1, (p.ts - last.ts) / 1000);
-    //         // simple speed filter (~< 8 m/s) to ignore big jumps
-    //         if (d / dt < 8) setDistance((x) => x + d);
-    //     }
-    //     lastRef.current = p;
-
-    //     setPoints((prev) => (Array.isArray(prev) ? prev.concat(p) : [p]));
-    // }, []);
 
     function startTimer() {
         tickRef.current = setInterval(() => {
@@ -170,10 +161,10 @@ export default function useTrailRecorder() {
 
             nativeSubRef.current = await Location.watchPositionAsync(
                 {
-                    accuracy: Location.Accuracy.BestForNavigation, // or Highest
+                    accuracy: Location.Accuracy.Highest, // or Highest
                     // Let distance drive updates; timeInterval can throttle on some devices
                     distanceInterval: 1,           // was 3
-                    timeInterval: 0,
+                    timeInterval: 2000,
                     mayShowUserSettingsDialog: true,
                 },
                 (loc) => {
@@ -186,23 +177,6 @@ export default function useTrailRecorder() {
                     });
                 }
             );
-
-            // nativeSubRef.current = await Location.watchPositionAsync(
-            //     {
-            //         accuracy: Location.Accuracy.Highest,
-            //         timeInterval: 2000,
-            //         distanceInterval: 3,
-            //         mayShowUserSettingsDialog: true,
-            //     },
-            //     (loc) => {
-            //         handlePoint({
-            //             ts: Date.now(),
-            //             lat: loc.coords.latitude,
-            //             lon: loc.coords.longitude,
-            //             alt: loc.coords.altitude ?? null,
-            //         });
-            //     }
-            // );
         }
 
         setStatus('recording');
@@ -288,7 +262,7 @@ export default function useTrailRecorder() {
 
             nativeSubRef.current = await Location.watchPositionAsync(
                 {
-                    accuracy: Location.Accuracy.BestForNavigation, // or Highest
+                    accuracy: Location.Accuracy.Highest, // or Highest
                     // Let distance drive updates; timeInterval can throttle on some devices
                     distanceInterval: 1,           // was 3
                     timeInterval: 0,
@@ -304,22 +278,6 @@ export default function useTrailRecorder() {
                     });
                 }
             );
-
-            // nativeSubRef.current = await Location.watchPositionAsync(
-            //     {
-            //         accuracy: Location.Accuracy.Highest,
-            //         timeInterval: 2000,
-            //         distanceInterval: 3,
-            //     },
-            //     (loc) => {
-            //         handlePoint({
-            //             ts: Date.now(),
-            //             lat: loc.coords.latitude,
-            //             lon: loc.coords.longitude,
-            //             alt: loc.coords.altitude ?? null,
-            //         });
-            //     }
-            // );
         }
 
         setStatus('recording');
@@ -335,202 +293,3 @@ export default function useTrailRecorder() {
 
     return { status, elapsed, distance, points, start, stop, pause, resume };
 }
-
-
-
-// import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-// import { Platform } from 'react-native';
-// import * as Location from 'expo-location';
-// import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-// import { saveHike } from '../lib/db';
-// import { useAuthToken } from '../lib/userAuthToken';
-// import { decodeUserId } from '../lib/useCurrentUser';
-// import { showToast } from '../lib/showToast';
-// import type { RecorderStatus, TrackPoint } from '@/types';
-
-// const R = 6371000;
-
-// function haversine(a: TrackPoint, b: TrackPoint) {
-//     const toRad = (v: number) => (v * Math.PI) / 180;
-
-//     const dLat = toRad(b.lat - a.lat);
-//     const dLon = toRad(b.lon - a.lon);
-
-//     const A =
-//         Math.sin(dLat / 2) ** 2 +
-//         Math.cos(toRad(a.lat)) *
-//         Math.cos(toRad(b.lat)) *
-//         Math.sin(dLon / 2) ** 2;
-
-//     return 2 * R * Math.asin(Math.sqrt(A));
-// }
-
-// export default function useTrailRecorder() {
-//     const [status, setStatus] = useState<RecorderStatus>('idle');
-//     const [elapsed, setElapsed] = useState(0);
-//     const [distance, setDistance] = useState(0);
-//     const [points, setPoints] = useState<TrackPoint[]>(() => []);
-
-//     const watchRef = useRef<Location.LocationSubscription | null>(null);
-//     const tickRef = useRef<number | null>(null);
-//     const startTsRef = useRef<number>(0);
-//     const lastRef = useRef<TrackPoint | null>(null);
-
-//     useEffect(() => {
-//         let active = false;
-//         (async () => {
-//             if (status === 'recording' && Platform.OS !== 'web') {
-//                 await activateKeepAwakeAsync('trail-recorder');
-//                 active = true;
-//             }
-//         })();
-//         return () => {
-//             if (active && Platform.OS !== 'web') deactivateKeepAwake('trail-recorder');
-//         };
-//     }, [status]);
-
-//     const start = useCallback(async () => {
-//         // const { status: perm } = await Location.requestForegroundPermissionsAsync();
-//         // if (perm !== 'granted') throw new Error('Location permission denied');
-
-//         if (Platform.OS !== 'web') {
-//             const { status: perm } = await Location.requestForegroundPermissionsAsync();
-//             if (perm !== 'granted') throw new Error('Location permission denied');
-//         }
-
-//         startTsRef.current = Date.now();
-//         setElapsed(0);
-//         setDistance(0);
-//         setPoints([]);
-//         lastRef.current = null;
-
-//         tickRef.current = setInterval(() => {
-//             setElapsed(Math.floor((Date.now() - startTsRef.current) / 1000));
-//         }, 1000) as unknown as number;
-
-//         watchRef.current = await Location.watchPositionAsync(
-//             {
-//                 accuracy: Location.Accuracy.Highest,
-//                 timeInterval: 2000,
-//                 distanceInterval: 3,
-//                 mayShowUserSettingsDialog: true,
-//             },
-//             (loc) => {
-//                 const p: TrackPoint = {
-//                     ts: Date.now(),
-//                     lat: loc.coords.latitude,
-//                     lon: loc.coords.longitude,
-//                     alt: loc.coords.altitude ?? null,
-//                 };
-
-//                 const last = lastRef.current;
-//                 if (last) {
-//                     const d = haversine(last, p);
-//                     const dt = Math.max(1, (p.ts - last.ts) / 1000);
-//                     if (d / dt < 8) setDistance(x => x + d);
-//                 }
-//                 lastRef.current = p;
-
-//                 setPoints(prev => {
-//                     const arr = Array.isArray(prev) ? prev : [];
-//                     return arr.concat(p);
-//                 });
-//             }
-//         );
-//         setStatus('recording');
-//     }, []);
-
-
-//     const { token } = useAuthToken();
-//     const user_id = useMemo(() => decodeUserId(token), [token]);
-//     const userIdRef = useRef<string | null>(null);
-//     useEffect(() => { userIdRef.current = user_id }, [user_id]);
-
-//     const stop = useCallback(async () => {
-//         if (watchRef.current) { watchRef.current.remove(); watchRef.current = null; }
-//         if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
-
-//         const uid = userIdRef.current;
-//         if (!uid) {
-//             setStatus('idle');
-//             return showToast({ type: "error", msg: "Could not save hike, please log in and try again." });
-//         }
-
-//         const summary = {
-//             trailId: (globalThis as any).crypto?.randomUUID?.() ?? String(Date.now()),
-//             startedAt: startTsRef.current,
-//             endedAt: Date.now(),
-//             distance_m: Math.round(distance),
-//             duration_s: elapsed,
-//             points,
-//         };
-
-//         try {
-//             const hike = {
-//                 trailId: summary.trailId,
-//                 started_at: summary.startedAt,
-//                 ended_at: summary.endedAt,
-//                 distance_m: summary.distance_m,
-//                 duration_s: summary.duration_s,
-//                 points_json: JSON.stringify(summary.points),
-//             }
-//             await saveHike(hike, token)
-//         } catch (e) {
-//             console.warn('Failed to insert hike:', e);
-//         }
-
-//         setStatus('idle');
-//         return summary;
-//     }, [distance, elapsed, points]);
-
-//     const pause = useCallback(() => {
-//         if (watchRef.current) { watchRef.current.remove(); watchRef.current = null; }
-//         if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
-//         setStatus('paused');
-//     }, []);
-
-//     const resume = useCallback(async () => {
-//         if (status !== 'paused') return;
-
-//         startTsRef.current = Date.now() - elapsed * 1000;
-//         tickRef.current = setInterval(() => {
-//             setElapsed(Math.floor((Date.now() - startTsRef.current) / 1000));
-//         }, 1000) as unknown as number;
-
-//         watchRef.current = await Location.watchPositionAsync(
-//             {
-//                 accuracy: Location.Accuracy.Highest,
-//                 timeInterval: 2000,
-//                 distanceInterval: 3,
-//             },
-//             (loc) => {
-//                 const p: TrackPoint = {
-//                     ts: Date.now(),
-//                     lat: loc.coords.latitude,
-//                     lon: loc.coords.longitude,
-//                     alt: loc.coords.altitude ?? null,
-//                 };
-//                 const last = lastRef.current;
-//                 if (last) {
-//                     const d = haversine(last, p);
-//                     const dt = Math.max(1, (p.ts - last.ts) / 1000);
-//                     if (d / dt < 8) setDistance(x => x + d);
-//                 }
-//                 lastRef.current = p;
-
-//                 setPoints(prev => (Array.isArray(prev) ? prev.concat(p) : [p]));
-//             }
-//         );
-
-//         setStatus('recording');
-//     }, [elapsed, status]);
-
-//     useEffect(() => {
-//         return () => {
-//             if (watchRef.current) watchRef.current.remove();
-//             if (tickRef.current) clearInterval(tickRef.current);
-//         };
-//     }, []);
-
-//     return { status, elapsed, distance, points, start, stop, pause, resume };
-// }

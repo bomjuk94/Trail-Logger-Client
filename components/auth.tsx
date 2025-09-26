@@ -123,7 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
             const returnedData = await res.json();
-            console.log('returned data', returnedData)
             if (!res.ok) {
                 throw new Error(returnedData.error || 'Login failed');
             }
@@ -145,51 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserName('')
         setPassword('')
     };
-
-    // const signIn = async ({
-    //     userName,
-    //     password,
-    //     setUserName,
-    //     setPassword,
-    // }: SignInProps) => {
-    //     try {
-    //         const res = await apiFetch('/api/login', {
-    //             method: 'POST',
-    //             body: JSON.stringify({ userName, password }),
-    //         });
-
-    //         const data = await res.json()
-    //         console.log('data', data)
-
-    //         // const parsed = await safeParse(res);
-    //         // console.log('parsed response', res.)
-
-    //         // if (!parsed.ok) {
-    //         //     const msg = pickErrorMessage(parsed, 'Login failed');
-    //         //     throw new Error(msg);
-    //         // }
-    //         // const token = parsed.data?.token;
-    //         // if (!token) {
-    //         //     throw new Error('Malformed response from server (missing token).');
-    //         // }
-
-    //         // await sset(KEY, '1');
-    //         // await saveToken(token);
-    //         // setUser({ id: 'remote-user' });
-    //         // setStatus('signedIn');
-    //         // router.replace('/');
-    //     } catch (e) {
-    //         const msg = (e as Error).message || 'Login failed';
-    //         showToast({ type: 'error', msg });
-    //         console.warn('[auth] signIn failed:', msg);
-    //         setUser(null);
-    //         setStatus('signedOut');
-    //     } finally {
-    //         // Clear input fields regardless
-    //         setUserName('');
-    //         setPassword('');
-    //     }
-    // };
 
     /** Register */
     const register = async (userName: string, password: string) => {

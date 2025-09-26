@@ -39,7 +39,7 @@ export const useGetCachedPosition = ({ permStatus, setLocation }: PositionProps)
                 if (mounted && cached) setLocation(cached);
 
                 const fresh = await Location.getCurrentPositionAsync({
-                    accuracy: Location.Accuracy.Balanced,
+                    accuracy: Location.Accuracy.Highest,
                     timeout: 15000,
                 });
                 if (mounted) setLocation(fresh);

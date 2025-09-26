@@ -41,7 +41,7 @@ export const useGetLivePosition = ({ permStatus, setLocation }: PositionProps) =
                     );
                 } else {
                     nativeSub = await Location.watchPositionAsync(
-                        { accuracy: Location.Accuracy.Balanced, distanceInterval: 50 },
+                        { accuracy: Location.Accuracy.Highest, distanceInterval: 1 },
                         (pos) => {
                             if (!cancelled) setLocation(pos);
                         }

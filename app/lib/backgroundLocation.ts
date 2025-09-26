@@ -1,4 +1,3 @@
-// import '../tasks/locationTask';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
@@ -25,8 +24,8 @@ export async function startBackgroundLocation() {
 
     await Location.startLocationUpdatesAsync(LOCATION_TASK, {
         accuracy: Location.Accuracy.Highest,
-        distanceInterval: 5,
-        timeInterval: 5000,
+        distanceInterval: 3,
+        timeInterval: 2000,
         pausesUpdatesAutomatically: false,
         foregroundService: {
             notificationTitle: 'Trail Logger',

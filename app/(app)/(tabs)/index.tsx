@@ -31,7 +31,7 @@ export default function HomeScreen() {
   const { token, loading: tokenLoading } = useAuthToken();
   const lastFetchRef = useRef<{ t: number; lat: number; lon: number } | null>(null);
   const recorder = useTrailRecorder()
-  const { status, elapsed, distance, points } = recorder
+  const { status, elapsed, distance } = recorder
   const { onPrimary, onSecondary } = useUserActions(recorder)
 
   useEffect(() => {
@@ -123,18 +123,6 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
-
-      <View>
-        <Text>Distance: {distance}</Text>
-        <Text>Points: {points.map((point) => (
-          <View key={point.ts}>
-            <Text>ts: {point.ts}</Text>
-            <Text>lat: {point.lat}</Text>
-            <Text>lon: {point.lon}</Text>
-          </View>
-        ))}</Text>
-      </View>
-
     </View>
   );
 }
