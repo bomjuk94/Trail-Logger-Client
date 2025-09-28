@@ -3,7 +3,7 @@ import {
     requestLocationPermissions,
     startBackgroundLocation,
     stopBackgroundLocation,
-    isTracking
+    isTracking,
 } from '../lib/backgroundLocation';
 import { showToast } from '../lib/showToast';
 import { drainBufferedPoints } from '../lib/backgroundSink';
@@ -13,7 +13,6 @@ import { requestWakeLock, releaseWakeLock } from '../lib/wakeLock';
 export const useUserActions = (recorder: Recorder) => {
     const onPrimary = async () => {
         let wakeLocked = false;
-
         try {
             if (recorder.status === 'idle') {
                 if (Platform.OS === 'web') {
@@ -21,13 +20,9 @@ export const useUserActions = (recorder: Recorder) => {
                     wakeLocked = true;
                 } else {
                     await requestLocationPermissions();
-                    // avoid double-starting the Android foreground service
-                    if (!(await isTracking())) {
-                        await startBackgroundLocation();
-                    }
+                    if (!(await isTracking())) await startBackgroundLocation();
                 }
-
-                await recorder.start(); // your timers/state/etc.
+                await recorder.start();
                 showToast({ type: 'success', msg: 'Recording started' });
                 return;
             }
@@ -39,26 +34,48 @@ export const useUserActions = (recorder: Recorder) => {
                 } else {
                     await stopBackgroundLocation();
                     const buffered = await drainBufferedPoints();
-                    void buffered; // or recorder.ingest?.(buffered)
+                    if (buffered?.length) {
+                        // feed them into the recorder before stop
+                        await recorder.ingest?.(buffered);
+                    }
                 }
 
-                const summary = await recorder.stop();
-                showToast({ type: 'success', msg: 'Hike saved' });
+                const result = await recorder.stop();
+                if (result.saved) {
+                    showToast({ type: 'success', msg: 'Hike saved to cloud' });
+                } else {
+                    const reason = result.error?.message ?? 'Network/auth issue';
+                    showToast({
+                        type: 'error',
+                        msg: `Save failed: ${reason}. Saved locally; will retry.`,
+                    });
+                }
                 return;
             }
         } catch (e: any) {
             console.warn('onPrimary error:', e);
             showToast({ type: 'error', msg: e?.message || 'Something went wrong' });
-            // cleanup if we grabbed a wake lock
             if (wakeLocked) {
-                try { releaseWakeLock(); } catch { }
+                try {
+                    releaseWakeLock();
+                } catch { }
             }
         }
     };
 
     const onSecondary = async () => {
-        if (recorder.status === 'recording') recorder.pause();
-        else if (recorder.status === 'paused') await recorder.resume();
+        try {
+            if (recorder.status === 'recording') {
+                recorder.pause();
+                showToast({ type: 'info', msg: 'Paused recording' });
+            } else if (recorder.status === 'paused') {
+                await recorder.resume();
+                showToast({ type: 'success', msg: 'Resumed recording' });
+            }
+        } catch (e: any) {
+            console.warn('onSecondary error:', e);
+            showToast({ type: 'error', msg: e?.message || 'Pause/Resume failed' });
+        }
     };
 
     return { onPrimary, onSecondary };
