@@ -39,7 +39,7 @@ const config: ExpoConfig = {
     },
     android: {
         package: "app.traillogger",
-        versionCode: 3,
+        versionCode: 4,
         permissions: [
             "ACCESS_COARSE_LOCATION",
             "ACCESS_FINE_LOCATION",
