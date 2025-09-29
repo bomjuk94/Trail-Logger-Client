@@ -142,7 +142,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <Button title="Sign out" onPress={signOut} />
+        {/* <Button title="Sign out" onPress={signOut} /> */}
       </View>
     </ScrollView>
   );
