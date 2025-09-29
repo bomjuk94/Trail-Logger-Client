@@ -41,6 +41,7 @@ export const useUserActions = (recorder: Recorder) => {
                 }
 
                 const result = await recorder.stop();
+                console.log('result from trying to save hike', result)
                 if (result.saved) {
                     showToast({ type: 'success', msg: 'Hike saved to cloud' });
                 } else {
