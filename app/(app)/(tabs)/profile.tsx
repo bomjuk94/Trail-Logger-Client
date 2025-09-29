@@ -138,11 +138,11 @@ export default function ProfileScreen() {
                 isMetric,
                 isPace,
               })} />
+
+              <CustomButton text="Sign Out" onPress={signOut} />
             </View>
           )}
         </View>
-
-        <Button title="Sign out" onPress={signOut} />
       </View>
     </ScrollView>
   );
