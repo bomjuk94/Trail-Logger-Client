@@ -133,10 +133,6 @@ export default function HomeScreen() {
             />
           </View>
         )}
-
-        <Text>
-          Current Status: {status}
-        </Text>
       </View>
     </View>
   );
