@@ -10,7 +10,6 @@ import { decodeUserId } from '../lib/useCurrentUser';
 import { showToast } from '../lib/showToast';
 import type { RecorderStatus, TrackPoint, StopResult, StopSummary } from '@/types';
 
-// ---------- Optional native storage for snapshots ----------
 let AsyncStorage: {
     getItem(key: string): Promise<string | null>;
     setItem(key: string, v: string): Promise<void>;
@@ -19,17 +18,15 @@ let AsyncStorage: {
 
 if (Platform.OS !== 'web') {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         AsyncStorage = require('@react-native-async-storage/async-storage').default;
     } catch {
         AsyncStorage = null;
     }
 }
 
-const R = 6371000; // meters
+const R = 6371000;
 const SNAPSHOT_KEY = 'trailRecorder.snapshot.v1';
 
-// ------------------------- distance helper -------------------------
 function haversine(a: TrackPoint, b: TrackPoint) {
     const toRad = (v: number) => (v * Math.PI) / 180;
     const dLat = toRad(b.lat - a.lat);
@@ -40,7 +37,6 @@ function haversine(a: TrackPoint, b: TrackPoint) {
     return 2 * R * Math.asin(Math.sqrt(A));
 }
 
-// ------------------------- snapshot storage -------------------------
 async function snapSet(value: unknown) {
     const s = JSON.stringify(value);
     if (Platform.OS === 'web') {
@@ -77,14 +73,11 @@ async function snapClear() {
     } catch { }
 }
 
-// ------------------------- tiny SQLite queue -------------------------
-
 let db: SQLite.SQLiteDatabase | null = null;
 
 function getDb(): SQLite.SQLiteDatabase | null {
     if (Platform.OS === 'web') return null; // skip web for now
     if (!db) {
-        // SDK 51+: use the sync API
         db = SQLite.openDatabaseSync('trails.db');
     }
     return db;
@@ -114,7 +107,6 @@ function insertPending(summary: StopSummary): Promise<void> {
     const created_at = Date.now();
 
     if (!d) {
-        // Web fallback: localStorage
         try {
             const key = `pending_hikes_${summary.trailId}`;
             const payload = {
@@ -156,14 +148,12 @@ function insertPending(summary: StopSummary): Promise<void> {
     }
 }
 
-// ------------------------- hook -------------------------
 export default function useTrailRecorder() {
     const [status, setStatus] = useState<RecorderStatus>('idle');
     const [elapsed, setElapsed] = useState(0);
     const [distance, setDistance] = useState(0);
     const [points, setPoints] = useState<TrackPoint[]>(() => []);
 
-    // Watchers per platform
     const nativeSubRef = useRef<Location.LocationSubscription | null>(null);
     const webWatchIdRef = useRef<number | null>(null);
 
@@ -181,12 +171,10 @@ export default function useTrailRecorder() {
         }
     }
 
-    // init local DB once
     useEffect(() => {
         initLocalDb();
     }, []);
 
-    // Keep-awake on native only (web uses Wake Lock elsewhere)
     useEffect(() => {
         let active = false;
         (async () => {
@@ -202,7 +190,6 @@ export default function useTrailRecorder() {
         };
     }, [status]);
 
-    // Filters (prod)
     const MIN_ACCURACY_M = 30;  // discard noisy fixes (>30 m)
     const MAX_SPEED_MS = 12;    // discard unrealistic jumps (>12 m/s)
     const MAX_JUMP_M = 120;     // discard single huge hops
@@ -304,7 +291,6 @@ export default function useTrailRecorder() {
         setStatus('recording');
     }, [handlePoint]);
 
-    // ---------- Auth / User ----------
     const { token } = useAuthToken();
     const user_id = useMemo(() => decodeUserId(token), [token]);
     const userIdRef = useRef<string | null>(null);
@@ -312,7 +298,6 @@ export default function useTrailRecorder() {
         userIdRef.current = user_id;
     }, [user_id]);
 
-    // ---------- Stop with online/offline routing ----------
     const stop = useCallback(async (): Promise<StopResult> => {
         clearWatchers();
         stopTimer();
@@ -330,14 +315,11 @@ export default function useTrailRecorder() {
         const uid = userIdRef.current;
         if (!uid) {
             setStatus('idle');
-            // persist locally so user can sync after login
             try { await insertPending(summary); } catch { }
-            // clear snapshot anyway—we’ve serialized the hike
             void snapClear();
             return { summary, saved: false, error: new Error('Not logged in') };
         }
 
-        // Network state
         const net = await NetInfo.fetch();
         const online = !!net.isConnected && (net.isInternetReachable ?? true);
         const canTryRemote = !!token && online;
@@ -358,13 +340,11 @@ export default function useTrailRecorder() {
                 return { summary, saved: true };
             }
 
-            // offline or no internet → queue locally
             await insertPending(summary);
             setStatus('idle');
             void snapClear();
             return { summary, saved: false, error: new Error('Offline — saved locally') };
         } catch (e: any) {
-            // remote failed (e.g., 401/500) → queue locally
             try { await insertPending(summary); } catch { }
             setStatus('idle');
             void snapClear();
@@ -425,20 +405,17 @@ export default function useTrailRecorder() {
         setStatus('recording');
     }, [elapsed, status, handlePoint]);
 
-    // ---------- Ingest buffered background points before stopping ----------
     const ingest = useCallback((buffered: TrackPoint[]) => {
         if (!buffered?.length) return;
         for (const p of buffered) handlePoint(p);
     }, [handlePoint]);
 
-    // ---------- Snapshot persistence (debounced) ----------
     const saveSnapshotDebounceRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (status === 'recording' || status === 'paused') {
             cancelSnapshotDebounce();
             saveSnapshotDebounceRef.current = setTimeout(() => {
-                // GUARD: check live status at write time, not captured status
                 if (statusRef.current !== 'recording' && statusRef.current !== 'paused') return;
                 void snapSet({
                     startTs: startTsRef.current,
@@ -450,21 +427,18 @@ export default function useTrailRecorder() {
                 saveSnapshotDebounceRef.current = null;
             }, 1500) as unknown as number;
         } else {
-            // If we transition to idle, ensure no delayed writes remain
             cancelSnapshotDebounce();
         }
     }, [status, elapsed, distance, points]);
 
-    // ---- in unmount cleanup, also cancel ----
     useEffect(() => {
         return () => {
             clearWatchers();
             stopTimer();
-            cancelSnapshotDebounce(); // prevent late writes during unmount
+            cancelSnapshotDebounce()
         };
     }, []);
 
-    // Try to restore a paused/in-progress track on mount (e.g., app was killed)
     useEffect(() => {
         (async () => {
             const snap = await snapGet<{
@@ -490,7 +464,6 @@ export default function useTrailRecorder() {
         clearWatchers();
         stopTimer();
         setStatus('idle');
-        // optional: ensure no stale snapshot survives
         void snapClear();
     }, []);
 

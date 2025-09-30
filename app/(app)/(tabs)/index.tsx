@@ -19,7 +19,6 @@ import { useGetLivePosition } from '@/app/hooks/useGetLivePosition';
 import { useGetWeather } from '@/app/hooks/useGetWeather';
 import { usePendingSync } from '@/app/hooks/usePendingSync';
 
-/* ------------------------------ helpers ------------------------------ */
 const { fmtTime } = timeFormatter();
 const { fmtKm } = distanceFormatter();
 
@@ -36,7 +35,6 @@ export default function HomeScreen() {
   const { status, elapsed, distance, forceIdle } = recorder;
   usePendingSync(token, forceIdle)
 
-  // IMPORTANT: we need both handlers (you were calling onSecondary but not destructuring it)
   const { onPrimary, onSecondary } = useUserActions(recorder);
 
   useEffect(() => {

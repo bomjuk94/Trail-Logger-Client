@@ -5,11 +5,9 @@ import type { Profile } from "@/types";
 import type { UseGetUserWeightProps } from "@/types";
 
 export const useGetUserWeight = ({ token, setUserWeight }: UseGetUserWeightProps) => {
-    // ✅ Call hooks at top level
     const { signOut } = useAuth();
 
     useEffect(() => {
-        // No token? clear and skip
         if (!token) {
             setUserWeight(null);
             return;
@@ -24,7 +22,6 @@ export const useGetUserWeight = ({ token, setUserWeight }: UseGetUserWeightProps
                 });
 
                 if (res.status === 401) {
-                    // token expired/invalid
                     if (!cancelled) await signOut();
                     return;
                 }
@@ -46,5 +43,4 @@ export const useGetUserWeight = ({ token, setUserWeight }: UseGetUserWeightProps
         return () => {
             cancelled = true;
         };
-    }, [token, signOut, setUserWeight]); // ✅ include deps
-};
+    }, [token, signOut, setUserWeight])

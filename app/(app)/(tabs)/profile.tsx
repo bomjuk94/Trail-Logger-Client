@@ -67,7 +67,7 @@ export default function ProfileScreen() {
                   placeholder="Password"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry                 // ✅ only here
+                  secureTextEntry           
                   style={styles.input}
                 />
               </View>

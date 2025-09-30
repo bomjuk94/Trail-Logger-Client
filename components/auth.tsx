@@ -15,7 +15,6 @@ const KEY = getAuthKey().authKey ?? 'traillogger_is_authed';
 const AuthCtx = createContext<Ctx>(null as any);
 const isWeb = Platform.OS === 'web';
 
-/** Storage helpers (web → localStorage; native → SecureStore with AsyncStorage fallback) */
 async function sget(key: string) {
     if (isWeb) return Promise.resolve(localStorage.getItem(key));
     try {
@@ -41,11 +40,6 @@ async function sdel(key: string) {
     return AsyncStorage.removeItem(key);
 }
 
-/** Parse a fetch Response safely:
- * - Prefer JSON when content-type says JSON
- * - Otherwise fall back to text
- * Returns: { ok, status, data, text }
- */
 async function safeParse(res: Response) {
     const ct = res.headers.get('content-type') || '';
     let text = '';
@@ -59,14 +53,12 @@ async function safeParse(res: Response) {
     if (ct.includes('application/json')) {
         try { data = JSON.parse(text); } catch { /* keep null */ }
     } else {
-        // Sometimes servers send JSON without proper header — try best-effort parse
         try { data = JSON.parse(text); } catch { /* keep null */ }
     }
 
     return { ok: res.ok, status: res.status, data, text };
 }
 
-/** Prefer server-provided message; otherwise fall back to text or a generic label */
 function pickErrorMessage(payload: { data: any, text: string }, fallback: string) {
     const { data, text } = payload;
     return (
@@ -84,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { saveToken, clearToken } = useAuthToken();
 
-    /** Bootstrap session */
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -107,9 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => { cancelled = true; };
     }, []);
 
-    /** Sign in */
-
-
     const signIn = async ({
         userName,
         password,
@@ -128,10 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (returnedData.token) {
-                await sset(KEY, '1');                 // persist “authed” flag
-                await saveToken(returnedData.token);  // token → localStorage on web / SecureStore on native
-                setUser({ id: 'remote-user' });
-                setStatus('signedIn');
+                await sset(KEY, '1')
+                await saveToken(returnedData.token)
+                setUser({ id: 'remote-user' })
+                setStatus('signedIn')
                 router.replace('/');
             }
         } catch (e) {
@@ -145,7 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPassword('')
     };
 
-    /** Register */
     const register = async (userName: string, password: string) => {
         try {
             const res = await apiFetch('/api/register', {
@@ -179,7 +166,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    /** Sign out */
     const signOut = async () => {
         try {
             await sdel(KEY);

@@ -20,8 +20,6 @@ export async function saveHike(hike: HikeRow, token: string | null) {
     return res.json();
 }
 
-// Keep signature: (userId) so your hook keeps working.
-// We ignore userId on web and use the token from storage.
 export async function listHikes(_userId: string | null): Promise<HikeRow[]> {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
 

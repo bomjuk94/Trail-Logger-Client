@@ -19,7 +19,6 @@ export function listPending(): Array<{
 }> {
     const d = getDb();
     if (!d) {
-        // web fallback from localStorage
         const keys = Object.keys(localStorage).filter(k => k.startsWith('pending_hikes_'));
         return keys.map((k) => JSON.parse(localStorage.getItem(k) || 'null')).filter(Boolean);
     }

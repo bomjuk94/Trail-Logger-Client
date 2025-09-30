@@ -1,4 +1,3 @@
-// app/hooks/useAskLocationOnce.ts
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -6,7 +5,6 @@ import { getConfig } from '../lib/getConfig';
 
 export async function ensureLocationPermissionOnce() {
     if (Platform.OS === 'web') {
-        // Let the browser prompt on first geolocation call; mark as “asked”
         const { getAskedKey } = getConfig();
         const ASKED_KEY = getAskedKey().askedKey;
         const alreadyAsked = localStorage.getItem(ASKED_KEY);
@@ -34,57 +32,3 @@ export async function ensureLocationPermissionOnce() {
     if (!alreadyAsked) await AsyncStorage.setItem(ASKED_KEY, '1');
     return { status, canAskAgain };
 }
-
-
-// import * as Location from 'expo-location'
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { Platform } from 'react-native';
-// import { getConfig } from '../lib/getConfig';
-
-// export async function ensureLocationPermissionOnce() {
-
-//     if (Platform.OS === 'web') {
-//         return { status: 'granted' as const, canAskAgain: true };
-//     }
-
-//     const { getAskedKey } = getConfig()
-//     const ASKED_KEY = getAskedKey().askedKey
-//     let alreadyAsked
-//     if (Platform.OS === 'web') {
-//         localStorage.getItem(ASKED_KEY)
-//     } else {
-//         alreadyAsked = await AsyncStorage.getItem(ASKED_KEY);
-//     }
-
-//     const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
-
-//     if (status === 'granted') {
-//         if (!alreadyAsked) {
-//             if (Platform.OS === 'web') {
-//                 localStorage.setItem(ASKED_KEY, '1')
-//             } else {
-//                 await AsyncStorage.setItem(ASKED_KEY, '1');
-//             }
-//         }
-//         return { status, canAskAgain };
-//     }
-
-//     if (!alreadyAsked && canAskAgain) {
-//         const req = await Location.requestForegroundPermissionsAsync();
-//         if (Platform.OS === 'web') {
-//             localStorage.setItem(ASKED_KEY, '1')
-//         } else {
-//             await AsyncStorage.setItem(ASKED_KEY, '1');
-//         }
-//         return { status: req.status, canAskAgain: req.canAskAgain ?? true };
-//     }
-
-//     if (!alreadyAsked) {
-//         if (Platform.OS === 'web') {
-//             localStorage.setItem(ASKED_KEY, '1')
-//         } else {
-//             await AsyncStorage.setItem(ASKED_KEY, '1');
-//         }
-//     }
-//     return { status, canAskAgain };
-// }

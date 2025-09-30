@@ -4,7 +4,6 @@ import { syncPendingHikes } from '../lib/syncPending';
 import { showToast } from '@/app/lib/showToast';
 
 export function usePendingSync(token: string | null, forceIdle: () => void) {
-    // on mount / token change
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -20,7 +19,6 @@ export function usePendingSync(token: string | null, forceIdle: () => void) {
         };
     }, [token]);
 
-    // on network regain
     useEffect(() => {
         if (!token) return;
         const unsub = NetInfo.addEventListener(async (state) => {

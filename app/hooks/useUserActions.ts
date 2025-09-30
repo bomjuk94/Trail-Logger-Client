@@ -35,7 +35,6 @@ export const useUserActions = (recorder: Recorder) => {
                     await stopBackgroundLocation();
                     const buffered = await drainBufferedPoints();
                     if (buffered?.length) {
-                        // feed them into the recorder before stop
                         await recorder.ingest?.(buffered);
                     }
                 }

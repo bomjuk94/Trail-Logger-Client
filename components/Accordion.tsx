@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { BASE } from '@/app/lib/apiFetch';
 import { Platform, UIManager, LayoutAnimation, View, Text, Pressable, StyleSheet, Image, FlatList } from 'react-native';
 import type { AccordionProps } from '@/types/Accordion';
 import { formatNumbers } from '@/app/lib/formatNumbers';
@@ -88,8 +87,6 @@ const Accordion = ({ weather }: AccordionProps) => {
                         </Text>
 
                         <Image
-                            // source={{ uri: `https://openweathermap.org/img/wn/${weather.icon}.png` }}
-                            // source={{ uri: `${BASE}/api/proxy/icon/${weather.icon}@2x.png` }}
                             source={getOwmIcon(weather.icon)}
                             style={styles.weatherIcon}
                             resizeMode="contain"

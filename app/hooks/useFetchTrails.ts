@@ -17,11 +17,8 @@ export const useFetchTrails = ({
 
             if (tokenLoading) return;
             if (!token) {
-                // setLoading(false);
                 return;
             }
-            // setLoading(true);
-            // setErr(null);
 
             try {
                 const res = await apiFetch('/api/trails', {
@@ -41,9 +38,7 @@ export const useFetchTrails = ({
                 }
             } catch (e: any) {
                 console.warn('Failed to load trails')
-                // if (!cancelled) setErr(e.message ?? 'Failed to load profile');
             } finally {
-                // if (!cancelled) setLoading(false);
             }
         };
         fetchTrails();
