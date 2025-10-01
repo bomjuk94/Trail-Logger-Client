@@ -44,3 +44,4 @@ export const useGetUserWeight = ({ token, setUserWeight }: UseGetUserWeightProps
             cancelled = true;
         };
     }, [token, signOut, setUserWeight])
+}
